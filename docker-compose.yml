@@ -13,7 +13,7 @@ services:
     environment:
       - DB_HOST=db
       - DB_USER=root
-      - DB_PASSWORD=example
+      - DB_PASSWORD=123123
       - DB_NAME=calculator
     depends_on:
       - db
