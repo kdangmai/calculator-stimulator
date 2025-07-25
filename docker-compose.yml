@@ -1,9 +1,8 @@
-version: "3.8"
 services:
   frontend:
     build: ./frontend
     ports:
-      - "3000:3000"
+      - "3000:5173"
     depends_on:
       - backend
   backend:
@@ -15,13 +14,18 @@ services:
       - DB_USER=root
       - DB_PASSWORD=123123
       - DB_NAME=calculator
-    depends_on:
-      - db
+    depends_on: 
+      db:
+        condition: service_healthy
   db:
     image: mysql:8
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: example
+      MYSQL_ROOT_PASSWORD: 123123
       MYSQL_DATABASE: calculator
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
     ports:
-      - "3306:3306"
+      - "3307:3306"

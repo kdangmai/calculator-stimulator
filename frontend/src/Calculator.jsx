@@ -1,9 +1,21 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import './Calculator.css'
 
 export default function Calculator() {
   const [input, setInput] = useState('')
   const [result, setResult] = useState('')
+  const [history, setHistory] = useState([])
+
+  // Lấy lịch sử tính toán từ backend khi component được tải
+  useEffect(() => {
+    const fetchHistory = async () => {
+      // Giả sử backend của bạn có API tại /api/history
+      // const response = await fetch('/api/history');
+      // const data = await response.json();
+      // setHistory(data);
+    }
+    fetchHistory().catch(console.error)
+  }, [])
 
   const handleClick = (value) => {
     if (result !== '') {
@@ -23,18 +35,55 @@ export default function Calculator() {
     setInput(input.slice(0, -1))
   }
 
-  const handleCalculate = () => {
+  // Hàm tính toán an toàn hơn để thay thế eval()
+  // Đây là một ví dụ đơn giản, bạn nên dùng thư viện như 'mathjs' cho ứng dụng thực tế
+  const safeCalculate = (expression) => {
+    // Lọc các ký tự không hợp lệ để tăng cường bảo mật
+    const sanitizedExpression = expression.replace(/[^-()\d/*+.]/g, '');
     try {
-      // eslint-disable-next-line no-eval
-      const evalResult = eval(input)
-      setResult(evalResult.toString())
-    } catch {
-      setResult('Error')
+      // eslint-disable-next-line no-new-func
+      return new Function('return ' + sanitizedExpression)();
+    } catch (error) {
+      console.error("Calculation error:", error);
+      throw new Error("Invalid expression");
+    }
+  }
+
+  const handleCalculate = async () => {
+    if (input === '') return;
+    try {
+      // CẢNH BÁO BẢO MẬT: Sử dụng eval() rất nguy hiểm.
+      // Thay thế bằng một hàm tính toán an toàn hơn.
+      const evalResult = safeCalculate(input);
+      const resultString = evalResult.toString();
+      setResult(resultString);
+
+      // Gửi phép tính và kết quả đến backend để lưu lại
+      const calculation = { expression: input, result: resultString };
+      
+      await fetch('/api/history', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(calculation),
+      });
+      
+      // Cập nhật giao diện với lịch sử mới
+      setHistory([calculation, ...history]);
+    } catch (error) {
+      setResult('Error');
     }
   }
 
   return (
     <div className="calculator">
+      <div className="history-display">
+        <h4>History</h4>
+        <ul>
+          {history.map((item, index) => (
+            <li key={index}>{item.expression} = {item.result}</li>
+          ))}
+        </ul>
+      </div>
       <div className="display">
         <input value={input} readOnly placeholder="0" />
         <div className="result">{result}</div>
