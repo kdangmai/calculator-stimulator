@@ -9,13 +9,11 @@ dotenv.config();
 app.use(cors());
 app.use(express.json());
 
-const db = mysql.createPool({
-  connectionLimit: 100, // Giới hạn số lượng kết nối trong pool
+const db = mysql.createConnection({
   host: process.env.DB_HOST || "db-1",
   user: process.env.DB_USER || "root",
   password: process.env.DB_PASSWORD || "123123",
   database: process.env.DB_NAME || "calculator",
-  port: process.env.DB_PORT || 3307, // Cổng mặc định của MySQL
 }).promise(); // Bật chế độ promise để dùng async/await
 
 // Hàm tự gọi để kiểm tra kết nối và bảng khi khởi động
@@ -54,7 +52,7 @@ app.post("/history", async (req, res) => {
 // API lấy lịch sử phép tính
 app.get("/history", async (req, res) => {
   try {
-    const [rows] = await db.query("SELECT * FROM history ORDER BY id DESC LIMIT 10");
+    const [rows] = await db.query("SELECT * FROM history ORDER BY id DESC");
     res.json(rows);
   } catch (err) {
     console.error("Lỗi khi lấy lịch sử:", err);
